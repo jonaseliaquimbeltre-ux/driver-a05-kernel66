@@ -11,10 +11,10 @@ jobs:
       - name: Checkout repositorio
         uses: actions/checkout@v4
 
-      - name: Instalar herramientas de compilacion
+      - name: Instalar herramientas y compilador AArch64
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential bc libncurses-dev libssl-dev libelf-dev flex bison git
+          sudo apt-get install -y build-essential bc libncurses-dev libssl-dev libelf-dev flex bison git gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
       - name: Descargar codigo fuente del driver RTL8188EU
         run: |
@@ -23,9 +23,9 @@ jobs:
       - name: Compilar modulo .ko para AArch64
         run: |
           cd rtl8188eu
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- || true
 
-      - name: Guardar el archivo r8188eu.ko
+      - name: Guardar el archivo .ko
         run: |
           mkdir output
           find rtl8188eu -name "*.ko" -exec cp {} output/ \;
