@@ -1,0 +1,37 @@
+name: Compilar Driver RTL8188EU Kernel 6.6
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar herramientas de compilacion
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc libncurses-dev libssl-dev libelf-dev flex bison git
+
+      - name: Descargar codigo fuente del driver RTL8188EU
+        run: |
+          git clone https://github.com/lwfinger/rtl8188eu.git rtl8188eu
+
+      - name: Compilar modulo .ko para AArch64
+        run: |
+          cd rtl8188eu
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+      - name: Guardar el archivo r8188eu.ko
+        run: |
+          mkdir output
+          find rtl8188eu -name "*.ko" -exec cp {} output/ \;
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: driver-r8188eu-kernel6.6
+          path: output/*.ko
