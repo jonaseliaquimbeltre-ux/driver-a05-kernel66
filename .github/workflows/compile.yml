@@ -1,4 +1,4 @@
-name: Compilar Driver RTL8188EU Kernel 6.6 Samsung A05
+name: Compilar Driver RTL8188EU Kernel 6.6
 
 on:
   workflow_dispatch:
@@ -11,34 +11,28 @@ jobs:
       - name: Checkout repositorio
         uses: actions/checkout@v4
 
-      - name: Instalar herramientas y compilador AArch64
+      - name: Instalar herramientas
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential bc libncurses-dev libssl-dev libelf-dev flex bison git gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-      - name: Descargar codigo fuente del driver RTL8188EU
+      - name: Clonar fuente del Kernel 6.6 con driver r8188eu (staging)
         run: |
-          git clone https://github.com/lwfinger/rtl8188eu.git rtl8188eu
+          git clone --depth 1 -b linux-6.6.y https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git kernel
 
-      - name: Descargar cabeceras genéricas de Linux Kernel 6.6
+      - name: Compilar modulo r8188eu para AArch64
         run: |
-          git clone --depth 1 -b linux-6.6.y https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git kernel-source
-
-      - name: Compilar modulo .ko contra Kernel 6.6
-        run: |
-          cd kernel-source
+          cd kernel
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- prepare
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
-          cd ../rtl8188eu
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- KSRC=../kernel-source
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=drivers/staging/rtl8188eu modules
 
-      - name: Preparar archivo para descarga
+      - name: Guardar archivo .ko
         run: |
           mkdir output
-          find rtl8188eu -name "*.ko" -exec cp {} output/ \;
+          find kernel/drivers/staging/rtl8188eu -name "*.ko" -exec cp {} output/ \;
 
-      - name: Subir artefacto (.ko)
+      - name: Subir artefacto
         uses: actions/upload-artifact@v4
         with:
           name: driver-r8188eu-kernel6.6
